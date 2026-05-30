@@ -1,0 +1,1638 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Branchly · 剧情共创宇宙</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@400;600;700&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+/* ── Variables ─────────────────────────────────────────────── */
+:root {
+  --bg:        #04060f;
+  --bg2:       #070a18;
+  --surface:   rgba(255,255,255,0.04);
+  --surface2:  rgba(255,255,255,0.08);
+  --border:    rgba(255,255,255,0.08);
+  --border2:   rgba(255,255,255,0.18);
+
+  --alive:     #78d8ff;
+  --alive-g:   rgba(120,216,255,0.35);
+  --hot:       #f0c040;
+  --hot-g:     rgba(240,192,64,0.38);
+  --danger:    #f59e0b;
+  --danger-g:  rgba(245,158,11,0.28);
+  --drop:      #4b5563;
+  --drop-g:    rgba(75,85,99,0.18);
+
+  --text:      #e2e8f0;
+  --muted:     #94a3b8;
+  --faint:     #475569;
+
+  --serif: 'Noto Serif SC', 'Songti SC', Georgia, serif;
+  --sans:  Inter, 'Noto Sans SC', 'Microsoft YaHei', sans-serif;
+  --r: 8px;
+  --r-lg: 14px;
+  --nav-h: 56px;
+}
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html { scroll-behavior: smooth; }
+body { background: var(--bg); color: var(--text); font: 14px/1.5 var(--sans); -webkit-font-smoothing: antialiased; overflow: hidden; height: 100vh; }
+a { color: inherit; text-decoration: none; }
+button { font: inherit; cursor: pointer; border: none; background: none; color: inherit; }
+input, textarea, select { font: inherit; color: inherit; background: none; border: none; outline: none; }
+svg { display: block; }
+img { display: block; }
+
+/* ── Starfield ─────────────────────────────────────────────── */
+#starfield { position: fixed; inset: 0; pointer-events: none; z-index: 0; }
+
+/* ── App Shell ─────────────────────────────────────────────── */
+#app { position: fixed; inset: 0; display: flex; flex-direction: column; z-index: 1; }
+
+/* ── Navigation ───────────────────────────────────────────── */
+#nav {
+  height: var(--nav-h); flex-shrink: 0;
+  display: flex; align-items: center; gap: 16px; padding: 0 28px;
+  border-bottom: 1px solid var(--border);
+  background: rgba(4,6,15,0.85); backdrop-filter: blur(16px);
+  z-index: 100; position: relative;
+}
+.logo {
+  font-family: var(--serif); font-size: 18px; font-weight: 700;
+  letter-spacing: -0.5px; display: flex; align-items: center; gap: 9px;
+  cursor: pointer;
+}
+.logo-mark {
+  width: 26px; height: 26px; border-radius: 7px;
+  background: linear-gradient(135deg, var(--alive) 0%, #4ab8ff 100%);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 13px; font-weight: 800; color: #04060f; letter-spacing: -1px;
+  box-shadow: 0 0 14px rgba(120,216,255,0.4);
+}
+.nav-center { flex: 1; display: flex; justify-content: center; }
+.nav-back {
+  display: flex; align-items: center; gap: 6px;
+  font-size: 13px; color: var(--muted); padding: 5px 10px;
+  border-radius: var(--r); transition: all 0.15s; cursor: pointer;
+}
+.nav-back:hover { color: var(--text); background: var(--surface); }
+.nav-right { display: flex; align-items: center; gap: 10px; }
+.token-badge {
+  display: flex; align-items: center; gap: 5px; padding: 4px 12px;
+  border-radius: 20px; border: 1px solid rgba(240,192,64,0.3);
+  background: rgba(240,192,64,0.06); font-size: 12px; font-weight: 500; color: var(--hot);
+}
+
+/* ── Buttons ──────────────────────────────────────────────── */
+.btn {
+  display: inline-flex; align-items: center; gap: 6px; padding: 9px 18px;
+  border-radius: var(--r); font-size: 13px; font-weight: 500;
+  border: 1px solid var(--border2); background: var(--surface); color: var(--text);
+  transition: all 0.15s; cursor: pointer; white-space: nowrap;
+}
+.btn:hover { background: var(--surface2); border-color: rgba(255,255,255,0.28); }
+.btn:active { transform: scale(0.97); }
+.btn.primary { background: var(--alive); border-color: var(--alive); color: #050c1a; font-weight: 600; }
+.btn.primary:hover { background: #a0e8ff; border-color: #a0e8ff; }
+.btn.sm { padding: 6px 12px; font-size: 12px; }
+.btn.gold { background: rgba(240,192,64,0.15); border-color: rgba(240,192,64,0.5); color: var(--hot); }
+.btn.gold:hover { background: rgba(240,192,64,0.25); }
+.btn:disabled { opacity: 0.4; cursor: not-allowed; pointer-events: none; }
+
+/* ── Pages ───────────────────────────────────────────────── */
+.page { display: none; flex: 1; overflow: hidden; }
+.page.active { display: flex; flex-direction: column; }
+
+/* ═══════════════════════════════════════
+   HOME PAGE
+   ═══════════════════════════════════════ */
+#page-home { overflow-y: auto; }
+#page-home::-webkit-scrollbar { width: 5px; }
+#page-home::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 3px; }
+
+/* ── Hero Banner ─────────────────────────────────────────── */
+.hero {
+  position: relative; width: 100%; height: 480px; overflow: hidden;
+  flex-shrink: 0;
+}
+.hero-bg {
+  position: absolute; inset: 0;
+  background: linear-gradient(135deg, #040820 0%, #08142e 50%, #050f22 100%);
+}
+.hero-bg img {
+  width: 100%; height: 100%; object-fit: cover; object-position: center top;
+  opacity: 0.55; mix-blend-mode: luminosity;
+}
+.hero-overlay {
+  position: absolute; inset: 0;
+  background: linear-gradient(to right, rgba(4,6,15,0.92) 0%, rgba(4,6,15,0.55) 50%, rgba(4,6,15,0.25) 100%),
+              linear-gradient(to top, rgba(4,6,15,0.9) 0%, transparent 40%);
+}
+.hero-content {
+  position: relative; z-index: 2; height: 100%;
+  display: flex; flex-direction: column; justify-content: flex-end;
+  padding: 0 60px 48px; max-width: 660px;
+}
+.hero-badge {
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 4px 12px; border-radius: 20px; margin-bottom: 16px;
+  border: 1px solid rgba(120,216,255,0.3);
+  background: rgba(120,216,255,0.07);
+  font-size: 11px; font-weight: 500; letter-spacing: 1px;
+  text-transform: uppercase; color: var(--alive);
+  width: fit-content;
+}
+.hero-badge .dot { width: 5px; height: 5px; border-radius: 50%; background: var(--alive); box-shadow: 0 0 6px var(--alive); animation: pulse 2s ease-in-out infinite; }
+@keyframes pulse { 0%,100%{opacity:1}50%{opacity:0.4} }
+.hero-title {
+  font-family: var(--serif); font-size: clamp(32px, 4.5vw, 58px);
+  font-weight: 700; line-height: 1.05; letter-spacing: -1.5px;
+  color: var(--text); margin-bottom: 12px;
+}
+.hero-desc { font-size: 14px; color: var(--muted); margin-bottom: 28px; line-height: 1.6; max-width: 44ch; }
+.hero-actions { display: flex; align-items: center; gap: 12px; }
+.hero-meta {
+  position: absolute; right: 60px; bottom: 60px; z-index: 2;
+  display: flex; flex-direction: column; align-items: flex-end; gap: 10px;
+}
+.hero-stat {
+  text-align: right;
+}
+.hero-stat .val { font-size: 28px; font-weight: 300; letter-spacing: -1px; color: var(--text); }
+.hero-stat .lab { font-size: 10px; font-weight: 500; letter-spacing: 1.5px; text-transform: uppercase; color: var(--faint); }
+
+/* ── Section container ───────────────────────────────────── */
+.home-section { padding: 40px 60px; }
+.section-header {
+  display: flex; align-items: baseline; justify-content: space-between;
+  margin-bottom: 22px;
+}
+.section-title { font-family: var(--serif); font-size: 18px; font-weight: 600; letter-spacing: -0.3px; }
+.section-more { font-size: 12px; color: var(--faint); transition: color 0.15s; cursor: pointer; }
+.section-more:hover { color: var(--muted); }
+
+/* ── Drama Cards Grid ────────────────────────────────────── */
+.drama-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 20px; }
+.drama-card {
+  border: 1px solid var(--border); border-radius: var(--r-lg); overflow: hidden;
+  background: var(--surface); cursor: pointer;
+  transition: border-color 0.2s, transform 0.2s;
+}
+.drama-card:hover { border-color: var(--border2); transform: translateY(-3px); }
+.drama-card.featured { border-color: rgba(120,216,255,0.2); }
+.drama-poster {
+  width: 100%; aspect-ratio: 16/9; position: relative; overflow: hidden;
+  background: #040820;
+}
+.drama-poster img { width: 100%; height: 100%; object-fit: cover; object-position: center 20%; transition: transform 0.4s; }
+.drama-card:hover .drama-poster img { transform: scale(1.04); }
+.drama-poster-placeholder {
+  width: 100%; height: 100%;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 11px; letter-spacing: 1px; text-transform: uppercase; color: var(--faint);
+}
+.poster-badge {
+  position: absolute; top: 10px; left: 10px;
+  padding: 3px 8px; border-radius: 20px; font-size: 10px; font-weight: 600;
+  letter-spacing: 0.5px;
+}
+.poster-badge.live { background: rgba(120,216,255,0.2); color: var(--alive); border: 1px solid rgba(120,216,255,0.3); }
+.poster-badge.new  { background: rgba(240,192,64,0.15); color: var(--hot); border: 1px solid rgba(240,192,64,0.3); }
+.poster-play-hint {
+  position: absolute; inset: 0; display: flex; align-items: center; justify-content: center;
+  background: rgba(4,6,15,0.4); opacity: 0; transition: opacity 0.2s;
+}
+.drama-card:hover .poster-play-hint { opacity: 1; }
+.play-circle {
+  width: 44px; height: 44px; border-radius: 50%;
+  background: rgba(120,216,255,0.2); border: 1px solid rgba(120,216,255,0.5);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 16px; color: var(--alive); padding-left: 3px;
+}
+.drama-info { padding: 14px; }
+.drama-name { font-family: var(--serif); font-size: 14px; font-weight: 600; margin-bottom: 5px; line-height: 1.3; }
+.drama-tagline { font-size: 11px; color: var(--muted); margin-bottom: 10px; line-height: 1.4; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+.drama-footer { display: flex; align-items: center; justify-content: space-between; }
+.branch-count { font-size: 11px; color: var(--faint); display: flex; align-items: center; gap: 4px; }
+.branch-count .n { color: var(--alive); font-weight: 600; }
+.status-chip {
+  padding: 2px 7px; border-radius: 10px; font-size: 10px; font-weight: 500;
+}
+.status-chip.alive { background: rgba(120,216,255,0.1); color: var(--alive); }
+.status-chip.coming { background: rgba(75,85,99,0.15); color: var(--drop); }
+
+/* ── In-card Hot Branches ────────────────────────────────── */
+.card-branches { padding: 12px 14px; border-top: 1px solid var(--border); }
+.card-branches-label { font-size: 10px; font-weight: 600; letter-spacing: 1px; text-transform: uppercase; color: var(--faint); margin-bottom: 10px; display: flex; align-items: center; gap: 6px; }
+.card-branches-row { display: flex; gap: 8px; overflow-x: auto; }
+.card-branches-row::-webkit-scrollbar { height: 0; }
+.card-branch-chip {
+  flex-shrink: 0; width: 110px; cursor: pointer;
+  border: 1px solid var(--border); border-radius: var(--r); overflow: hidden;
+  background: rgba(0,0,0,0.3); transition: border-color 0.15s;
+}
+.card-branch-chip:hover { border-color: var(--border2); }
+.card-branch-vid {
+  width: 100%; aspect-ratio: 16/9; position: relative; overflow: hidden;
+  background: linear-gradient(160deg, rgba(120,216,255,0.06) 0%, rgba(4,6,15,0.9) 100%);
+  display: flex; align-items: center; justify-content: center;
+}
+.card-branch-vid video { width: 100%; height: 100%; object-fit: cover; }
+.card-branch-vid .mini-play {
+  position: absolute; width: 22px; height: 22px; border-radius: 50%;
+  background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.25);
+  display: flex; align-items: center; justify-content: center; font-size: 8px; padding-left: 1px;
+}
+.card-branch-info { padding: 7px 8px; }
+.card-branch-title { font-size: 10px; font-weight: 500; line-height: 1.3; margin-bottom: 3px; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+.card-branch-likes { font-size: 10px; color: var(--faint); }
+
+/* ── Hot Branches (standalone fallback) ──────────────────── */
+.branches-row {
+  display: flex; gap: 14px; overflow-x: auto; padding-bottom: 4px;
+}
+.branches-row::-webkit-scrollbar { height: 3px; }
+.branches-row::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 2px; }
+.branch-thumb {
+  flex-shrink: 0; width: 160px; cursor: pointer;
+  border: 1px solid var(--border); border-radius: var(--r); overflow: hidden;
+  background: var(--surface); transition: all 0.2s;
+}
+.branch-thumb:hover { border-color: var(--border2); transform: translateY(-2px); }
+.branch-thumb-img {
+  width: 100%; aspect-ratio: 9/16; position: relative; overflow: hidden;
+  background: linear-gradient(180deg, #08142e 0%, #040820 100%);
+  display: flex; align-items: center; justify-content: center;
+}
+.branch-thumb-img img { width: 100%; height: 100%; object-fit: cover; }
+.branch-thumb-overlay {
+  position: absolute; inset: 0;
+  background: linear-gradient(to top, rgba(4,6,15,0.85) 0%, transparent 50%);
+  display: flex; align-items: flex-end; padding: 10px;
+}
+.branch-thumb-play {
+  position: absolute; top: 50%; left: 50%; transform: translate(-50%,-50%);
+  width: 32px; height: 32px; border-radius: 50%;
+  background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.25);
+  display: flex; align-items: center; justify-content: center; font-size: 12px; padding-left: 2px;
+  opacity: 0.8;
+}
+.branch-thumb-likes { font-size: 10px; color: rgba(255,255,255,0.7); display: flex; align-items: center; gap: 3px; }
+.branch-thumb-info { padding: 10px; }
+.branch-thumb-title { font-size: 12px; font-weight: 500; line-height: 1.3; margin-bottom: 4px; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+.branch-thumb-meta { font-size: 10px; color: var(--faint); }
+
+/* ═══════════════════════════════════════
+   TREE PAGE
+   ═══════════════════════════════════════ */
+#page-tree { flex-direction: row; }
+#tree-wrap {
+  flex: 1; position: relative; overflow: hidden;
+  background: radial-gradient(ellipse 50% 70% at 20% 50%, rgba(120,216,255,0.04) 0%, transparent 70%);
+}
+#tree-svg { position: absolute; inset: 0; width: 100%; height: 100%; cursor: grab; }
+#tree-svg:active { cursor: grabbing; }
+.edge { fill: none; stroke-width: 1.5; stroke-dasharray: 5 8; animation: dashflow 7s linear infinite; }
+@keyframes dashflow { to { stroke-dashoffset: -100; } }
+.node-g { cursor: pointer; }
+.node-g .core { transition: r 0.2s ease; }
+.node-g:hover .core { r: 22; }
+.node-label { fill: var(--text); font-family: var(--sans); font-size: 11px; text-anchor: middle; pointer-events: none; }
+.node-sub   { fill: var(--muted); font-family: var(--sans); font-size: 10px; text-anchor: middle; pointer-events: none; }
+#tree-controls {
+  position: absolute; bottom: 20px; left: 20px;
+  display: flex; flex-direction: column; gap: 6px;
+}
+#tree-controls button {
+  width: 36px; height: 36px; border: 1px solid var(--border); border-radius: var(--r);
+  background: rgba(4,6,15,0.8); backdrop-filter: blur(8px); color: var(--text);
+  font-size: 16px; display: flex; align-items: center; justify-content: center;
+  transition: all 0.15s;
+}
+#tree-controls button:hover { background: var(--surface2); border-color: var(--border2); }
+#tree-legend {
+  position: absolute; bottom: 20px; right: 20px;
+  display: flex; gap: 14px; align-items: center; padding: 8px 14px;
+  background: rgba(4,6,15,0.7); border: 1px solid var(--border);
+  border-radius: 20px; backdrop-filter: blur(8px);
+}
+.legend-item { display: flex; align-items: center; gap: 5px; font-size: 11px; color: var(--muted); }
+.legend-dot { width: 7px; height: 7px; border-radius: 50%; }
+
+/* ── Tree Node Cards (foreignObject) ─────────────────────── */
+.nc {
+  border-radius: 8px; overflow: hidden; background: rgba(4,6,15,0.92);
+  cursor: pointer; display: flex; flex-direction: column; width: 100%; height: 100%;
+}
+.nc-thumb { position: relative; overflow: hidden; flex-shrink: 0; background: #000; }
+.nc-thumb video { width: 100%; height: 100%; object-fit: cover; display: block; }
+.nc-overlay {
+  position: absolute; inset: 0; display: flex; flex-direction: column;
+  align-items: center; justify-content: center; gap: 4px;
+  font-size: 10px; color: rgba(255,255,255,0.5); letter-spacing: 0.5px;
+}
+.nc-info {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 0 8px; background: rgba(0,0,0,0.65); flex-shrink: 0;
+}
+.nc-title {
+  font-size: 10px; color: #e2e8f0; white-space: nowrap; overflow: hidden;
+  text-overflow: ellipsis; flex: 1; font-family: var(--sans);
+}
+.nc-likes { font-size: 10px; flex-shrink: 0; margin-left: 6px; font-family: var(--sans); }
+
+/* ── Node Panel ──────────────────────────────────────────── */
+#node-panel {
+  width: 520px; flex-shrink: 0; border-left: 1px solid var(--border);
+  background: rgba(4,6,15,0.92); backdrop-filter: blur(20px);
+  display: flex; flex-direction: column; overflow: hidden;
+  transform: translateX(100%); transition: transform 0.3s cubic-bezier(0.4,0,0.2,1);
+}
+#node-panel.open { transform: translateX(0); }
+.panel-header { padding: 20px 20px 14px; border-bottom: 1px solid var(--border); position: relative; }
+.panel-close {
+  position: absolute; top: 16px; right: 16px; width: 28px; height: 28px;
+  border-radius: 50%; border: 1px solid var(--border); background: var(--surface);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 16px; color: var(--muted); transition: all 0.15s;
+}
+.panel-close:hover { background: var(--surface2); color: var(--text); }
+.panel-status { display: flex; align-items: center; gap: 6px; font-size: 11px; font-weight: 500; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 8px; }
+.panel-title { font-family: var(--serif); font-size: 20px; font-weight: 700; line-height: 1.2; margin-bottom: 5px; }
+.panel-meta { font-size: 11px; color: var(--muted); }
+.panel-body { flex: 1; overflow-y: auto; padding: 18px; display: flex; flex-direction: column; gap: 14px; }
+.panel-body::-webkit-scrollbar { width: 4px; }
+.panel-body::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 2px; }
+
+/* Video */
+.video-box {
+  border-radius: var(--r); overflow: hidden; background: #000;
+  aspect-ratio: 9/16; max-height: 260px;
+  display: flex; align-items: center; justify-content: center;
+  border: 1px solid var(--border); position: relative;
+}
+.video-box video { width: 100%; height: 100%; object-fit: cover; }
+.video-placeholder { display: flex; flex-direction: column; align-items: center; gap: 8px; color: var(--faint); }
+.play-icon { font-size: 34px; opacity: 0.3; }
+.lock-overlay {
+  position: absolute; inset: 0; background: rgba(4,6,15,0.82);
+  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 12px;
+  backdrop-filter: blur(4px);
+}
+.lock-text { font-size: 13px; color: var(--muted); text-align: center; }
+
+/* Synopsis */
+.synopsis-box { background: var(--surface); border: 1px solid var(--border); border-radius: var(--r); padding: 14px; }
+.section-label { font-size: 10px; font-weight: 600; letter-spacing: 1px; text-transform: uppercase; color: var(--faint); margin-bottom: 8px; }
+.synopsis-text { font-size: 13px; color: var(--muted); line-height: 1.6; }
+
+/* Stats */
+.stats-row { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; }
+.stat-box { background: var(--surface); border: 1px solid var(--border); border-radius: var(--r); padding: 12px 10px; text-align: center; }
+.stat-val { font-size: 20px; font-weight: 600; margin-bottom: 2px; }
+.stat-lab { font-size: 10px; color: var(--faint); text-transform: uppercase; letter-spacing: 0.8px; }
+
+/* Assets */
+.asset-row { display: flex; gap: 8px; flex-wrap: wrap; }
+.asset-chip {
+  display: flex; align-items: center; gap: 5px; padding: 4px 10px;
+  border-radius: 20px; border: 1px solid var(--border);
+  background: var(--surface); font-size: 11px; color: var(--muted);
+}
+.asset-chip .chip-dot { width: 5px; height: 5px; border-radius: 50%; background: var(--alive); }
+
+/* Panel actions */
+.panel-actions { display: flex; gap: 8px; flex-wrap: wrap; }
+.like-btn {
+  display: flex; align-items: center; gap: 5px; padding: 8px 14px;
+  border-radius: var(--r); border: 1px solid var(--border); background: var(--surface);
+  font-size: 13px; font-weight: 500; transition: all 0.15s; cursor: pointer;
+}
+.like-btn:hover { border-color: rgba(240,192,64,0.5); background: rgba(240,192,64,0.06); }
+.like-btn.liked { border-color: rgba(240,192,64,0.6); background: rgba(240,192,64,0.1); color: var(--hot); }
+
+/* ═══════════════════════════════════════
+   CREATE MODAL
+   ═══════════════════════════════════════ */
+#modal-create {
+  position: fixed; inset: 0; z-index: 200;
+  background: rgba(4,6,15,0.75); backdrop-filter: blur(12px);
+  display: none; align-items: center; justify-content: center; padding: 24px;
+}
+#modal-create.open { display: flex; }
+.modal-sheet {
+  width: 100%; max-width: 900px; max-height: calc(100vh - 48px);
+  background: #07101e; border: 1px solid var(--border2); border-radius: var(--r-lg);
+  display: flex; flex-direction: column; overflow: hidden;
+  box-shadow: 0 32px 80px rgba(0,0,0,0.6), 0 0 0 1px rgba(120,216,255,0.06);
+}
+.modal-header {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 20px 24px 16px; border-bottom: 1px solid var(--border); flex-shrink: 0;
+}
+.modal-header-left .modal-eyebrow { font-size: 10px; font-weight: 600; letter-spacing: 1.5px; text-transform: uppercase; color: var(--alive); margin-bottom: 3px; }
+.modal-header-left h2 { font-family: var(--serif); font-size: 20px; font-weight: 700; }
+.modal-header-right { display: flex; align-items: center; gap: 10px; }
+.modal-close {
+  width: 32px; height: 32px; border-radius: 50%; border: 1px solid var(--border);
+  background: var(--surface); display: flex; align-items: center; justify-content: center;
+  font-size: 18px; color: var(--muted); transition: all 0.15s; cursor: pointer;
+}
+.modal-close:hover { background: var(--surface2); color: var(--text); }
+.modal-body { display: grid; grid-template-columns: 1fr 320px; flex: 1; overflow: hidden; }
+.modal-left { padding: 20px 24px; overflow-y: auto; display: flex; flex-direction: column; gap: 20px; border-right: 1px solid var(--border); }
+.modal-left::-webkit-scrollbar { width: 4px; }
+.modal-left::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 2px; }
+.modal-right { padding: 18px; overflow-y: auto; display: flex; flex-direction: column; gap: 12px; }
+
+/* Phase steps */
+.phase-steps { display: flex; }
+.phase-step { flex: 1; padding: 7px; text-align: center; font-size: 11px; color: var(--faint); border-bottom: 1px solid var(--border); transition: all 0.2s; }
+.phase-step.active { color: var(--alive); border-bottom-color: var(--alive); }
+
+/* Form elements */
+.parent-ctx { background: var(--surface); border: 1px solid var(--border); border-radius: var(--r); padding: 12px 14px; }
+.parent-ctx .ctx-label { font-size: 10px; font-weight: 600; letter-spacing: 1px; text-transform: uppercase; color: var(--faint); margin-bottom: 5px; }
+.parent-ctx p { font-size: 13px; color: var(--muted); line-height: 1.5; }
+.form-label { font-size: 12px; font-weight: 500; color: var(--muted); margin-bottom: 8px; display: block; }
+.prompt-area {
+  width: 100%; min-height: 88px; padding: 12px 14px;
+  border: 1px solid var(--border); border-radius: var(--r);
+  background: var(--surface); color: var(--text);
+  font-size: 13px; line-height: 1.6; resize: vertical; transition: border-color 0.15s;
+}
+.prompt-area:focus { border-color: rgba(120,216,255,0.4); }
+.prompt-area::placeholder { color: var(--faint); }
+.role-lock { display: flex; align-items: flex-start; gap: 7px; padding: 9px 12px; background: rgba(120,216,255,0.04); border: 1px solid rgba(120,216,255,0.1); border-radius: var(--r); font-size: 11px; color: rgba(120,216,255,0.7); line-height: 1.4; }
+.role-lock svg { flex-shrink: 0; margin-top: 1px; }
+
+/* Character picker with photos */
+.char-grid { display: flex; gap: 10px; flex-wrap: wrap; }
+.char-btn {
+  display: flex; flex-direction: column; align-items: center; gap: 6px; padding: 8px;
+  border-radius: var(--r); border: 1px solid var(--border); background: var(--surface);
+  cursor: pointer; transition: all 0.15s; width: 76px;
+}
+.char-btn:hover { border-color: var(--border2); background: var(--surface2); }
+.char-btn.selected { border-color: rgba(120,216,255,0.5); background: rgba(120,216,255,0.07); }
+.char-photo {
+  width: 48px; height: 48px; border-radius: 50%; overflow: hidden;
+  background: var(--bg2); border: 2px solid var(--border);
+  display: flex; align-items: center; justify-content: center; font-size: 18px;
+  transition: border-color 0.15s; flex-shrink: 0;
+}
+.char-btn.selected .char-photo { border-color: rgba(120,216,255,0.5); }
+.char-photo img { width: 100%; height: 100%; object-fit: cover; object-position: top center; }
+.char-name { font-size: 11px; color: var(--muted); transition: color 0.15s; text-align: center; }
+.char-btn.selected .char-name { color: var(--alive); }
+
+/* Scene picker with photos */
+.scene-grid { display: flex; gap: 10px; flex-wrap: wrap; }
+.scene-btn {
+  display: flex; flex-direction: column; align-items: center; gap: 6px; padding: 8px;
+  border-radius: var(--r); border: 1px solid var(--border); background: var(--surface);
+  cursor: pointer; transition: all 0.15s; width: 90px;
+}
+.scene-btn:hover { border-color: var(--border2); background: var(--surface2); }
+.scene-btn.selected { border-color: rgba(240,192,64,0.4); background: rgba(240,192,64,0.06); }
+.scene-photo {
+  width: 100%; aspect-ratio: 16/9; border-radius: 5px; overflow: hidden;
+  background: var(--bg2); border: 1px solid var(--border);
+  display: flex; align-items: center; justify-content: center; font-size: 10px; color: var(--faint);
+}
+.scene-photo img { width: 100%; height: 100%; object-fit: cover; }
+.scene-name { font-size: 10px; color: var(--muted); text-align: center; transition: color 0.15s; }
+.scene-btn.selected .scene-name { color: var(--hot); }
+
+/* Options row */
+.options-row { display: flex; gap: 10px; }
+.option-select {
+  flex: 1; padding: 7px 10px; border: 1px solid var(--border); border-radius: var(--r);
+  background: var(--surface); color: var(--text); font-size: 12px; transition: border-color 0.15s;
+}
+.option-select:focus { border-color: rgba(120,216,255,0.4); }
+option { background: #07101e; }
+
+/* Preview */
+.preview-player {
+  width: 100%; aspect-ratio: 9/16; max-height: 280px; background: #000;
+  border-radius: var(--r); overflow: hidden; border: 1px solid var(--border);
+  display: flex; align-items: center; justify-content: center; position: relative;
+}
+.preview-player video { width: 100%; height: 100%; object-fit: cover; }
+.preview-empty { display: flex; flex-direction: column; align-items: center; gap: 10px; text-align: center; padding: 20px; }
+.preview-empty .icon { font-size: 30px; opacity: 0.25; }
+.preview-empty p { font-size: 12px; color: var(--faint); }
+.loading-ring {
+  width: 38px; height: 38px; border-radius: 50%;
+  border: 2px solid rgba(120,216,255,0.15); border-top-color: var(--alive);
+  animation: spin 0.9s linear infinite;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+.modal-actions { display: flex; flex-direction: column; gap: 8px; }
+.modal-actions .btn { justify-content: center; }
+.error-msg { padding: 10px 12px; border-radius: var(--r); background: rgba(239,68,68,0.08); border: 1px solid rgba(239,68,68,0.2); font-size: 12px; color: #f87171; }
+.tech-toggle { font-size: 11px; color: var(--faint); text-decoration: underline; cursor: pointer; text-align: center; transition: color 0.15s; }
+.tech-toggle:hover { color: var(--muted); }
+.tech-payload { background: var(--surface); border: 1px solid var(--border); border-radius: var(--r); padding: 10px; font-size: 10px; font-family: ui-monospace, monospace; color: var(--muted); overflow: auto; max-height: 160px; white-space: pre; display: none; }
+.tech-payload.open { display: block; }
+
+/* ── Toast ───────────────────────────────────────────────── */
+#toast {
+  position: fixed; bottom: 28px; left: 50%; transform: translateX(-50%);
+  z-index: 999; padding: 12px 22px; border-radius: var(--r);
+  background: rgba(7,16,30,0.95); border: 1px solid var(--border2);
+  color: var(--text); font-size: 13px; backdrop-filter: blur(12px);
+  opacity: 0; pointer-events: none; transition: opacity 0.25s; white-space: nowrap;
+}
+#toast.show { opacity: 1; }
+
+/* ── Status dots ─────────────────────────────────────────── */
+.status-dot { width: 6px; height: 6px; border-radius: 50%; flex-shrink: 0; }
+.status-dot.alive     { background: var(--alive); box-shadow: 0 0 6px var(--alive-g); }
+.status-dot.endangered{ background: var(--danger); box-shadow: 0 0 6px var(--danger-g); }
+.status-dot.dropped   { background: var(--drop); }
+</style>
+</head>
+<body>
+
+<canvas id="starfield"></canvas>
+
+<div id="app">
+
+  <!-- ── Nav ────────────────────────────── -->
+  <nav id="nav">
+    <div class="logo" onclick="navigate('home')">
+      <div class="logo-mark">B</div>
+      Branchly
+    </div>
+    <div class="nav-center">
+      <div class="nav-back" id="nav-back" onclick="navBack()" style="display:none">
+        ← <span id="nav-back-label">首页</span>
+      </div>
+    </div>
+    <div class="nav-right">
+      <div class="token-badge">
+        <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><circle cx="6" cy="6" r="5" stroke="currentColor" stroke-width="1.2"/><circle cx="6" cy="6" r="2" fill="currentColor"/></svg>
+        <span id="token-count">100</span> token
+      </div>
+    </div>
+  </nav>
+
+  <!-- ═══════════════════════════════════
+       HOME PAGE
+       ═══════════════════════════════════ -->
+  <div id="page-home" class="page active">
+
+    <!-- Hero Banner -->
+    <div class="hero">
+      <div class="hero-bg">
+        <img src="重生海报.png" alt="" onerror="this.style.display='none'">
+      </div>
+      <div class="hero-overlay"></div>
+      <div class="hero-content">
+        <div class="hero-badge">
+          <span class="dot"></span>
+          首发热播 · PixVerse 生成
+        </div>
+        <div class="hero-title">寒潮纪元·重生</div>
+        <div class="hero-desc">她当众撕毁那张支票的那一刻，整个故事才刚刚开始——这棵树的每一根枝桠，都是另一个结局的可能。</div>
+        <div class="hero-actions">
+          <button class="btn primary" onclick="navigate('tree')">进入剧情树 →</button>
+          <button class="btn" onclick="navigate('tree')">查看全部分支</button>
+        </div>
+      </div>
+      <div class="hero-meta">
+        <div class="hero-stat">
+          <div class="val" id="hero-branches">7</div>
+          <div class="lab">活跃分支</div>
+        </div>
+        <div class="hero-stat">
+          <div class="val" id="hero-likes">922</div>
+          <div class="lab">总点赞</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Drama Grid -->
+    <div class="home-section">
+      <div class="section-header">
+        <div class="section-title">正在生长的宇宙</div>
+        <div class="section-more">查看全部</div>
+      </div>
+      <div class="drama-grid" id="drama-grid"></div>
+    </div>
+
+    <!-- Hot Branches -->
+    <div class="home-section" style="padding-top:0">
+      <div class="section-header">
+        <div class="section-title">🔥 热门分支</div>
+        <div class="section-more">更多</div>
+      </div>
+      <div class="branches-row" id="branches-row"></div>
+    </div>
+
+  </div>
+
+  <!-- ═══════════════════════════════════
+       TREE PAGE
+       ═══════════════════════════════════ -->
+  <div id="page-tree" class="page">
+    <div id="tree-wrap">
+      <svg id="tree-svg">
+        <defs>
+          <filter id="glow-hot"   x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="7" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+          <filter id="glow-alive" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="5" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+          <filter id="glow-dngr" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="4" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+        </defs>
+        <g id="tree-root-g"></g>
+      </svg>
+      <div id="tree-controls">
+        <button onclick="treeZoom(1.2)">+</button>
+        <button onclick="treeZoom(0.8)">−</button>
+        <button onclick="treeReset()" style="font-size:12px">⟲</button>
+      </div>
+      <div id="tree-legend">
+        <div class="legend-item"><div class="legend-dot" style="background:var(--hot);box-shadow:0 0 6px var(--hot-g)"></div>热门</div>
+        <div class="legend-item"><div class="legend-dot" style="background:var(--alive);box-shadow:0 0 6px var(--alive-g)"></div>活跃</div>
+        <div class="legend-item"><div class="legend-dot" style="background:var(--danger);box-shadow:0 0 6px var(--danger-g)"></div>濒危</div>
+        <div class="legend-item"><div class="legend-dot" style="background:var(--drop)"></div>已 Drop</div>
+      </div>
+    </div>
+    <div id="node-panel">
+      <div class="panel-header" id="panel-header" style="position:relative">
+        <button class="panel-close" onclick="closePanel()">×</button>
+      </div>
+      <div class="panel-body" id="panel-body"></div>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════
+       CREATE MODAL
+       ═══════════════════════════════════ -->
+  <div id="modal-create">
+    <div class="modal-sheet">
+      <div class="modal-header">
+        <div class="modal-header-left">
+          <div class="modal-eyebrow">PixVerse Fusion API · 视觉血缘继承</div>
+          <h2>续写一个分支</h2>
+        </div>
+        <div class="modal-header-right">
+          <div class="token-badge">
+            <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><circle cx="6" cy="6" r="5" stroke="currentColor" stroke-width="1.2"/><circle cx="6" cy="6" r="2" fill="currentColor"/></svg>
+            <span id="modal-token-count">100</span> token
+          </div>
+          <button class="modal-close" onclick="closeModal()">×</button>
+        </div>
+      </div>
+      <div class="modal-body">
+        <div class="modal-left" id="modal-left"></div>
+        <div class="modal-right">
+          <div class="phase-steps" id="phase-steps">
+            <div class="phase-step active" data-phase="draft">① 写剧情</div>
+            <div class="phase-step" data-phase="generating">② 生成中</div>
+            <div class="phase-step" data-phase="preview">③ 预览</div>
+          </div>
+          <div class="preview-player" id="preview-player">
+            <div class="preview-empty"><div class="icon">🎬</div><p>生成后在这里预览</p></div>
+          </div>
+          <div class="modal-actions" id="modal-actions"></div>
+          <div id="modal-error"></div>
+          <button class="tech-toggle" id="tech-toggle" onclick="togglePayload()">查看 API 请求</button>
+          <div class="tech-payload" id="tech-payload"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<div id="toast"></div>
+
+<script>
+/* ──────────────────────────────────────────────────────────
+   CONFIG
+   Fill PIXVERSE_API_KEY with your key, set DEMO_MODE=false
+   for real generation. PROXY_URL if you need CORS proxy.
+   ────────────────────────────────────────────────────────── */
+const CONFIG = {
+  PIXVERSE_API_KEY: '',
+  DEMO_MODE: true,
+  PROXY_URL: '',
+  PIXVERSE_BASE: 'https://app-api.pixverse.ai',
+  DEFAULT_DURATION: 5,
+  DEFAULT_QUALITY: '720p',
+  DEFAULT_MODEL: 'v6',
+};
+
+/* ──────────────────────────────────────────────────────────
+   ASSETS
+   ────────────────────────────────────────────────────────── */
+const ASSETS = {
+  asset_lx: {
+    assetId:'asset_lx', type:'character', name:'林夏', refName:'linxia',
+    pixverseImgId: 875295974,
+    refImageUrl: '%40linxia.png',
+    promptPrefix:'A 28-year-old East Asian woman, shoulder-length straight black hair, oval face, cold pale skin, sharp calm eyes, tailored dark grey business suit',
+    negativePrompt:'no changing outfit, no different face, no extra person',
+  },
+  asset_cy: {
+    assetId:'asset_cy', type:'character', name:'陈翊', refName:'chenyi',
+    pixverseImgId: 875295975,
+    refImageUrl: '%40chenyi.png',
+    promptPrefix:'A 32-year-old East Asian man, neat short hair, sharp navy suit, arrogant and restrained',
+    negativePrompt:'no different face, no extra person, no casual clothes',
+  },
+  asset_meteor: {
+    assetId:'asset_meteor', type:'character', name:'神秘男人', refName:'mysteryman',
+    pixverseImgId: 875295976,
+    refImageUrl: '%40shenminanren.png',
+    promptPrefix:'A 45-year-old East Asian man, tired eyes, dark coat, restrained and suspicious',
+    negativePrompt:'no young face, no extra person',
+  },
+  asset_scene_meeting: {
+    assetId:'asset_scene_meeting', type:'scene', name:'玻璃会议室', refName:'meetingroom',
+    pixverseImgId: 20001, refImageUrl: '玻璃会议室.png',
+  },
+  asset_scene_blizzard: {
+    assetId:'asset_scene_blizzard', type:'scene', name:'暴雪街头', refName:'blizzard',
+    pixverseImgId: 20002, refImageUrl: '暴雪街头.png',
+  },
+  asset_scene_lab: {
+    assetId:'asset_scene_lab', type:'scene', name:'昏暗实验室', refName:'lab',
+    pixverseImgId: 20003, refImageUrl: '',
+  },
+  asset_style_main: {
+    assetId:'asset_style_main', type:'style', name:'寒潮主风格', refName:'coldwave',
+    promptPrefix:'vertical 9:16, cinematic short-drama, high contrast, cold winter light, shallow depth of field, film grain, tense revenge drama mood',
+  },
+};
+
+/* ──────────────────────────────────────────────────────────
+   MOCK NODES
+   ────────────────────────────────────────────────────────── */
+const INITIAL_NODES = {
+  node_root: {
+    nodeId:'node_root', parentId:null, title:'母片·重生', storyId:'story_001',
+    synopsis:'她当众撕毁了那张支票，全场哗然——这是整个故事的起点。',
+    prompt:'【角色圣经】林夏冷静强势，陈翊豪门继承人。\n宴会厅，林夏当众撕毁支票，众人愕然，慢推近景。',
+    authorId:'platform', authorName:'平台', duration:35,
+    ageDays:60, isFreeWindow:true, unlockPrice:0,
+    likes:520, impressions:12000, paidUnlocks:0,
+    isProtected:false, status:'alive',
+    videoUrl:'base.mov',
+    ownAssetIds:['asset_lx','asset_cy','asset_scene_meeting','asset_scene_blizzard','asset_style_main'],
+  },
+  node_a: {
+    nodeId:'node_a', parentId:'node_root', title:'寒潮来临', storyId:'story_001',
+    synopsis:'凛冬将至，她选择站在风暴最中心——一个让所有人都措手不及的决定。',
+    prompt:'林夏转身冷笑，灯光拉出冷金边缘，众人后退。',
+    authorId:'user_a', authorName:'匿名创作者#12', duration:22,
+    ageDays:12, isFreeWindow:true, unlockPrice:1.9,
+    likes:134, impressions:980, paidUnlocks:21,
+    isProtected:true, status:'alive',
+    videoUrl:'branch1.mov',
+    ownAssetIds:[], thumbUrl:'',
+  },
+  node_b: {
+    nodeId:'node_b', parentId:'node_root', title:'热浪来袭', storyId:'story_001',
+    synopsis:'截然相反的选择——她把所有的愤怒化成烈焰，让整个豪门灼烧。',
+    prompt:'女主宣布离婚，镜头轻微手持，情绪拉满。',
+    authorId:'user_b', authorName:'匿名创作者#42', duration:20,
+    ageDays:9, isFreeWindow:true, unlockPrice:1.9,
+    likes:87, impressions:1200, paidUnlocks:7,
+    isProtected:true, status:'alive',
+    videoUrl:'branch2.mov',
+    ownAssetIds:[], thumbUrl:'',
+  },
+  node_c: {
+    nodeId:'node_c', parentId:'node_root', title:'消失于深渊', storyId:'story_001',
+    synopsis:'她选择沉默消失，然而这条路走向了无人知晓的深渊。',
+    prompt:'女主背影离场，门口停住，听到窃窃私语，慢慢回头。',
+    authorId:'user_c', authorName:'匿名创作者#07', duration:18,
+    ageDays:50, isFreeWindow:false, unlockPrice:1.9,
+    likes:3, impressions:900, paidUnlocks:0,
+    isProtected:false, status:'dropped',
+    videoUrl:'', thumbUrl:'',
+    ownAssetIds:[],
+  },
+  node_locked: {
+    nodeId:'node_locked', parentId:'node_a', title:'待解锁', storyId:'story_001',
+    synopsis:'这条分支尚未开放——成为第一个解锁它的人。',
+    prompt:'',
+    authorId:'platform', authorName:'平台', duration:0,
+    ageDays:0, isFreeWindow:false, unlockPrice:3.9,
+    likes:0, impressions:0, paidUnlocks:0,
+    isProtected:false, status:'alive',
+    videoUrl:'', thumbUrl:'',
+    ownAssetIds:[],
+  },
+};
+
+/* 4 short dramas for home grid */
+const DRAMAS = [
+  {
+    id:'story_001', title:'寒潮纪元·重生',
+    tagline:'当众撕毁那张支票，她的逆袭才刚刚开始',
+    poster:'重生海报.png', status:'alive', featured:true,
+    nodeIds:['node_a','node_b','node_c','node_locked'],
+  },
+  {
+    id:'story_002', title:'暗夜女王',
+    tagline:'深紫夜色，奢靡豪门——她用半生蛰伏换来一夜覆手',
+    poster:'暗夜女王.png', status:'coming', featured:false,
+    gradientFrom:'#1a0428', gradientTo:'#0a0318',
+    nodeIds:[],
+  },
+  {
+    id:'story_003', title:'深渊棋局',
+    tagline:'所有的爱恨情仇，不过是一场精密设计的博弈',
+    poster:'深渊棋局.png', status:'coming', featured:false,
+    gradientFrom:'#040c18', gradientTo:'#0a1428',
+    nodeIds:[],
+  },
+  {
+    id:'story_004', title:'玫瑰与荆棘',
+    tagline:'她以爱为刀，划开了整个家族的谎言',
+    poster:'玫瑰与荆棘.png', status:'coming', featured:false,
+    gradientFrom:'#1a0408', gradientTo:'#280a0a',
+    nodeIds:[],
+  },
+];
+
+const PRESET_RESULTS = [
+  { resultId:'preset_A', title:'新芽·暴雪回眸', synopsis:'林夏在暴雪中回头，发现陈翊身后还有另一个操盘者。', seed:120845911 },
+  { resultId:'preset_B', title:'新芽·会议室反击', synopsis:'她把支票推回桌面，会议室灯光骤暗，陈翊终于失去掌控。', seed:573290184 },
+  { resultId:'preset_C', title:'新芽·录音证据', synopsis:'一段旧录音曝光寒潮真相，林夏决定把陈家拖进审判现场。', seed:948220731 },
+];
+
+/* ──────────────────────────────────────────────────────────
+   STATE
+   ────────────────────────────────────────────────────────── */
+const S = {
+  nodes: JSON.parse(JSON.stringify(INITIAL_NODES)),
+  tokenBalance: 100,
+  unlockedNodes: new Set(['node_root']),
+  likedNodes: new Set(),
+  currentPage: 'home',
+  selectedNodeId: null,
+  modalParentId: null,
+  modalPhase: 'draft',
+  modalResult: null,
+  modalPrompt: '',
+  modalSelectedChars: new Set(),
+  modalSelectedScene: '',
+  modalResultIndex: 0,
+  modalError: '',
+  modalPayloadVisible: false,
+  treeTransform: { x: 80, y: 80, k: 1 },
+  treePositions: {},
+};
+
+/* ──────────────────────────────────────────────────────────
+   STARFIELD
+   ────────────────────────────────────────────────────────── */
+(function() {
+  const canvas = document.getElementById('starfield');
+  const ctx = canvas.getContext('2d');
+  let stars = [];
+  function resize() {
+    canvas.width = innerWidth; canvas.height = innerHeight;
+    stars = Array.from({length:240}, () => ({
+      x: Math.random()*canvas.width, y: Math.random()*canvas.height,
+      r: Math.random()*1.1+0.1, base: Math.random()*0.45+0.04,
+      phase: Math.random()*Math.PI*2, speed: 0.004+Math.random()*0.007,
+    }));
+  }
+  function draw() {
+    ctx.clearRect(0,0,canvas.width,canvas.height);
+    const t = Date.now()/1000;
+    stars.forEach(s => {
+      const o = s.base + Math.sin(s.phase + t*s.speed)*0.1;
+      ctx.fillStyle = `rgba(200,215,255,${Math.max(0,o)})`;
+      ctx.beginPath(); ctx.arc(s.x,s.y,s.r,0,Math.PI*2); ctx.fill();
+    });
+    requestAnimationFrame(draw);
+  }
+  resize(); window.addEventListener('resize', resize); draw();
+})();
+
+/* ──────────────────────────────────────────────────────────
+   HELPERS
+   ────────────────────────────────────────────────────────── */
+function getAvailableAssets(nodeId) {
+  const ids = new Set();
+  let cur = S.nodes[nodeId];
+  while (cur) {
+    (cur.ownAssetIds||[]).forEach(id => ids.add(id));
+    cur = cur.parentId ? S.nodes[cur.parentId] : null;
+  }
+  return [...ids].map(id => ASSETS[id]).filter(Boolean);
+}
+
+function nodeColor(node) {
+  if (node.status === 'dropped')    return { fill:'#4b5563', glow:'none', filterId:'' };
+  if (node.status === 'endangered') return { fill:'#f59e0b', glow:'var(--danger-g)', filterId:'glow-dngr' };
+  if (node.likes > 100)             return { fill:'#f0c040', glow:'var(--hot-g)',    filterId:'glow-hot' };
+  return { fill:'#78d8ff', glow:'var(--alive-g)', filterId:'glow-alive' };
+}
+
+function formatRate(node) {
+  if (!node.impressions) return '—';
+  return (node.likes/node.impressions*100).toFixed(1)+'%';
+}
+
+function toast(msg, ms=1800) {
+  const el = document.getElementById('toast');
+  el.textContent = msg; el.classList.add('show');
+  clearTimeout(toast._t); toast._t = setTimeout(() => el.classList.remove('show'), ms);
+}
+
+function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
+function uid() { return 'node_'+Math.random().toString(36).slice(2,10); }
+
+/* ──────────────────────────────────────────────────────────
+   ROUTER
+   ────────────────────────────────────────────────────────── */
+function navigate(page, nodeId) {
+  S.currentPage = page; S.selectedNodeId = nodeId || null;
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  const el = document.getElementById('page-'+page);
+  if (el) el.classList.add('active');
+  const back = document.getElementById('nav-back');
+  const backLabel = document.getElementById('nav-back-label');
+  if (page === 'home') {
+    back.style.display = 'none';
+  } else {
+    back.style.display = 'flex';
+    backLabel.textContent = page === 'tree' ? '首页' : '剧情树';
+  }
+  if (page === 'home') renderHome();
+  else if (page === 'tree') renderTree();
+}
+
+function navBack() {
+  if (S.currentPage === 'tree') navigate('home');
+  else navigate('tree');
+}
+
+/* ──────────────────────────────────────────────────────────
+   HOME RENDER
+   ────────────────────────────────────────────────────────── */
+function renderHome() {
+  // Update hero stats
+  const aliveCount = Object.values(S.nodes).filter(n => n.status !== 'dropped').length;
+  const totalLikes = Object.values(S.nodes).reduce((s,n) => s+n.likes, 0);
+  document.getElementById('hero-branches').textContent = aliveCount;
+  document.getElementById('hero-likes').textContent = totalLikes;
+
+  // Drama cards — landscape poster + in-card branches
+  const grid = document.getElementById('drama-grid');
+  grid.innerHTML = DRAMAS.map(d => {
+    const isNav = d.id === 'story_001';
+    const bg = d.poster
+      ? `<img src="${d.poster}" alt="${d.title}"
+           onerror="this.style.display='none';this.nextElementSibling.style.display='flex'"
+         ><div class="drama-poster-placeholder" style="display:none;background:linear-gradient(135deg,${d.gradientFrom||'#0a1030'} 0%,${d.gradientTo||'#040820'} 100%)"><span style="color:rgba(255,255,255,0.15);font-size:13px;letter-spacing:2px;text-align:center;padding:0 20px">${d.title}</span></div>`
+      : `<div class="drama-poster-placeholder" style="background:linear-gradient(135deg,${d.gradientFrom||'#0a1030'} 0%,${d.gradientTo||'#040820'} 100%)"><span style="color:rgba(255,255,255,0.15);font-size:13px;letter-spacing:2px;text-align:center;padding:0 20px">${d.title}</span></div>`;
+
+    // branch chips inside card — only for story_001
+    const branchNodes = (d.nodeIds||[]).map(id => S.nodes[id]).filter(Boolean);
+    const branchesHtml = branchNodes.length ? `
+      <div class="card-branches">
+        <div class="card-branches-label">
+          <span>🔥 热门分支</span>
+          <span style="color:var(--alive);font-weight:600">${branchNodes.length}</span>
+        </div>
+        <div class="card-branches-row">
+          ${branchNodes.map(n => {
+            const col = nodeColor(n);
+            const isDropped = n.status === 'dropped';
+            const isLocked  = !n.isFreeWindow && n.status !== 'dropped' && !n.videoUrl;
+            // For thumbnail: use own video, or fall back to base.mov at a random-ish offset
+            const thumbSrc = n.videoUrl || 'base.mov';
+            const thumbT   = n.videoUrl ? '' : '#t=3';
+            const vidHtml = `<video src="${thumbSrc}${thumbT}" muted playsinline preload="metadata"
+                style="width:100%;height:100%;object-fit:cover"
+                onmouseenter="if(!${isDropped}&&!${isLocked})this.play()"
+                onmouseleave="this.pause();this.currentTime=0"></video>`;
+            const overlay = isDropped
+              ? `<div style="position:absolute;inset:0;background:rgba(0,0,0,0.6);display:flex;align-items:center;justify-content:center;flex-direction:column;gap:3px">
+                   <div style="font-size:14px">💀</div>
+                   <div style="font-size:9px;color:var(--drop);text-transform:uppercase;letter-spacing:1px">Dropped</div>
+                 </div>`
+              : isLocked
+              ? `<div style="position:absolute;inset:0;background:rgba(0,0,0,0.55);display:flex;align-items:center;justify-content:center;flex-direction:column;gap:3px">
+                   <div style="font-size:14px">🔒</div>
+                   <div style="font-size:9px;color:var(--hot);letter-spacing:0.5px">¥${n.unlockPrice}</div>
+                 </div>`
+              : `<div class="mini-play">▶</div>`;
+            return `<div class="card-branch-chip" onclick="event.stopPropagation();navigate('tree');setTimeout(()=>openPanel('${n.nodeId}'),400)">
+              <div class="card-branch-vid" style="position:relative">
+                ${vidHtml}
+                ${overlay}
+              </div>
+              <div class="card-branch-info">
+                <div class="card-branch-title">${n.title}</div>
+                <div class="card-branch-likes" style="color:${isDropped?'var(--drop)':isLocked?'var(--hot)':'var(--faint)'}">
+                  ${isDropped ? '已 Drop' : isLocked ? '待解锁' : '♥ '+n.likes}
+                </div>
+              </div>
+            </div>`;
+          }).join('')}
+          ${isNav ? `<div class="card-branch-chip" onclick="event.stopPropagation();navigate('tree')"
+            style="display:flex;align-items:center;justify-content:center;border-style:dashed;opacity:0.5;min-height:80px">
+            <div style="text-align:center;font-size:10px;color:var(--faint);line-height:1.5">+ 续写<br>新分支</div>
+          </div>` : ''}
+        </div>
+      </div>` : (d.status === 'coming' ? `
+      <div class="card-branches" style="text-align:center;padding:16px">
+        <span style="font-size:11px;color:var(--faint)">即将开放，敬请期待</span>
+      </div>` : '');
+
+    const badge = d.featured
+      ? `<div class="poster-badge live">🌿 进行中</div>`
+      : `<div class="poster-badge new">✦ 即将</div>`;
+
+    const totalBranches = d.nodeIds?.length || 0;
+
+    return `<div class="drama-card${d.featured?' featured':''}" onclick="${isNav?"navigate('tree')":'void(0)'}">
+      <div class="drama-poster">
+        ${bg}
+        ${badge}
+        ${isNav ? `<div class="poster-play-hint"><div class="play-circle">▶</div></div>` : ''}
+      </div>
+      <div class="drama-info">
+        <div class="drama-name">《${d.title}》</div>
+        <div class="drama-tagline">${d.tagline}</div>
+        <div class="drama-footer">
+          ${isNav ? `<div class="branch-count"><span class="n">${Object.values(S.nodes).filter(n=>n.status!=='dropped').length}</span> 分支活跃</div>` : '<div class="branch-count">——</div>'}
+          <div class="status-chip ${d.status==='coming'?'coming':'alive'}">${isNav?'可进入':'即将开放'}</div>
+        </div>
+      </div>
+      ${branchesHtml}
+    </div>`;
+  }).join('');
+
+  // branches-row section is removed (now inside cards)
+  const row = document.getElementById('branches-row');
+  if (row) row.closest('.home-section').style.display = 'none';
+}
+
+/* ──────────────────────────────────────────────────────────
+   TREE LAYOUT
+   ────────────────────────────────────────────────────────── */
+function computeLayout(rootId) {
+  const X_GAP=240, Y_GAP=130;
+  const children={};
+  Object.values(S.nodes).forEach(n => {
+    if (n.parentId) { if (!children[n.parentId]) children[n.parentId]=[]; children[n.parentId].push(n.nodeId); }
+  });
+  function height(id) {
+    const kids=children[id]||[];
+    return kids.length ? kids.reduce((s,k)=>s+height(k),0) : 1;
+  }
+  const pos={};
+  function assign(id, depth, yTop) {
+    const kids=children[id]||[], h=height(id);
+    pos[id]={x:depth*X_GAP+80, y:yTop+(h-1)*Y_GAP/2};
+    let cur=yTop;
+    kids.forEach(kid=>{ assign(kid,depth+1,cur); cur+=height(kid)*Y_GAP; });
+  }
+  assign(rootId,0,80); return pos;
+}
+
+/* ──────────────────────────────────────────────────────────
+   TREE RENDER
+   ────────────────────────────────────────────────────────── */
+function renderTree() {
+  S.treePositions = computeLayout('node_root');
+  drawTree();
+  setupTreePan();
+}
+
+function drawTree() {
+  // Card dimensions
+  const CARD = { w:155, h:96,  hw:77.5, thumbH:68, infoH:28 };
+  const ROOT = { w:182, h:112, hw:91,   thumbH:84, infoH:28 };
+
+  const g = document.getElementById('tree-root-g');
+  const {x,y,k} = S.treeTransform;
+  g.setAttribute('transform', `translate(${x},${y}) scale(${k})`);
+  const pos = S.treePositions;
+
+  // Edges: right-edge of source → left-edge of target
+  const edges = Object.values(S.nodes)
+    .filter(n => n.parentId && pos[n.nodeId] && pos[n.parentId])
+    .map(n => {
+      const parNode = S.nodes[n.parentId];
+      const srcDim = parNode.nodeId === 'node_root' ? ROOT : CARD;
+      const p = pos[n.parentId], c = pos[n.nodeId];
+      const sx = p.x + srcDim.hw, sy = p.y;
+      const tx = c.x - CARD.hw,   ty = c.y;
+      const cx1 = sx + 50, cx2 = tx - 50;
+      const col = n.status === 'dropped'     ? 'rgba(75,85,99,0.3)'
+                : n.nodeId === 'node_locked' ? 'rgba(240,192,64,0.18)'
+                : 'rgba(120,216,255,0.25)';
+      return `<path class="edge" d="M${sx},${sy} C${cx1},${sy} ${cx2},${ty} ${tx},${ty}" stroke="${col}"/>`;
+    }).join('');
+
+  // Node cards via foreignObject
+  const nodesSVG = Object.values(S.nodes)
+    .filter(n => pos[n.nodeId])
+    .map(n => {
+      const {x:nx, y:ny} = pos[n.nodeId];
+      const col      = nodeColor(n);
+      const dim      = n.nodeId === 'node_root' ? ROOT : CARD;
+      const isDropped = n.status === 'dropped';
+      const isLocked  = n.nodeId === 'node_locked';
+      const sel       = S.selectedNodeId === n.nodeId;
+
+      // Video thumbnail source
+      const vidSrc = n.videoUrl
+        ? n.videoUrl
+        : isDropped ? '' : 'base.mov#t=4';
+
+      const thumbFilter = isDropped ? 'filter:brightness(0.2)'
+                        : isLocked  ? 'filter:blur(3px) brightness(0.3)'
+                        : '';
+
+      const vidHtml = vidSrc
+        ? `<video src="${vidSrc}" muted playsinline preload="metadata"
+             style="width:100%;height:100%;object-fit:cover;${thumbFilter}"
+             onmouseenter="if(!${isDropped}&&!${isLocked})this.play()"
+             onmouseleave="this.pause();this.currentTime=0"></video>`
+        : `<div style="width:100%;height:100%;background:rgba(30,30,40,0.8)"></div>`;
+
+      const overlay = isDropped
+        ? `<div class="nc-overlay"><span style="font-size:20px">💀</span><span>Dropped</span></div>`
+        : isLocked
+        ? `<div class="nc-overlay"><span style="font-size:20px">🔒</span><span style="color:var(--hot)">¥${n.unlockPrice}</span></div>`
+        : '';
+
+      const border = sel
+        ? `border:2px solid ${col.fill};box-shadow:0 0 20px ${col.fill}55,0 0 40px ${col.fill}22`
+        : `border:1.5px solid ${col.fill}70;box-shadow:0 0 14px ${col.fill}28`;
+
+      const likesColor = isDropped ? 'var(--drop)' : isLocked ? 'var(--hot)' : col.fill;
+      const likesText  = isDropped ? '✕ Drop' : isLocked ? '待解锁' : '♥ ' + n.likes;
+
+      return `<g class="node-g" data-id="${n.nodeId}" onclick="openPanel('${n.nodeId}')" transform="translate(${nx},${ny})">
+        <foreignObject x="${-dim.hw}" y="${-dim.h/2}" width="${dim.w}" height="${dim.h}">
+          <div xmlns="http://www.w3.org/1999/xhtml" class="nc" style="${border}">
+            <div class="nc-thumb" style="height:${dim.thumbH}px">
+              ${vidHtml}
+              ${overlay}
+            </div>
+            <div class="nc-info" style="height:${dim.infoH}px">
+              <span class="nc-title">${n.title}</span>
+              <span class="nc-likes" style="color:${likesColor}">${likesText}</span>
+            </div>
+          </div>
+        </foreignObject>
+      </g>`;
+    }).join('');
+
+  // Plus buttons — appear to the right of each card
+  const plusBtns = Object.values(S.nodes)
+    .filter(n => n.status !== 'dropped' && n.nodeId !== 'node_locked' && pos[n.nodeId])
+    .map(n => {
+      const {x:nx, y:ny} = pos[n.nodeId];
+      const dim = n.nodeId === 'node_root' ? ROOT : CARD;
+      const bx = nx + dim.hw + 20;
+      return `<g class="plus-g" data-id="${n.nodeId}" transform="translate(${bx},${ny})"
+        onclick="openCreateModal('${n.nodeId}')" style="cursor:pointer;opacity:0;transition:opacity 0.2s">
+        <circle r="15" fill="var(--alive)" opacity="0.1"/>
+        <circle r="13" fill="none" stroke="var(--alive)" stroke-width="1" opacity="0.5"/>
+        <text text-anchor="middle" dy="5" font-size="16" fill="var(--alive)" font-weight="300">+</text>
+      </g>`;
+    }).join('');
+
+  g.innerHTML = edges + nodesSVG + plusBtns;
+
+  // Show + on hover over card or plus button
+  g.querySelectorAll('.node-g').forEach(ng => {
+    const id   = ng.dataset.id;
+    const plus = g.querySelector(`.plus-g[data-id="${id}"]`);
+    if (!plus) return;
+    const show = () => plus.style.opacity = '1';
+    const hide = () => plus.style.opacity = '0';
+    ng.addEventListener('mouseenter', show);
+    ng.addEventListener('mouseleave', hide);
+    plus.addEventListener('mouseenter', show);
+    plus.addEventListener('mouseleave', hide);
+  });
+}
+
+function setupTreePan() {
+  const svg=document.getElementById('tree-svg');
+  let dragging=false, sx,sy,tx,ty;
+  svg.onmousedown=e=>{
+    if (e.target.closest('.node-g')||e.target.closest('.plus-g')||e.target.closest('.nc')) return;
+    dragging=true; sx=e.clientX; sy=e.clientY; tx=S.treeTransform.x; ty=S.treeTransform.y;
+  };
+  window.addEventListener('mousemove',e=>{
+    if (!dragging) return;
+    S.treeTransform.x=tx+(e.clientX-sx); S.treeTransform.y=ty+(e.clientY-sy);
+    applyTreeTransform();
+  });
+  window.addEventListener('mouseup',()=>{ dragging=false; });
+  svg.addEventListener('wheel',e=>{ e.preventDefault(); const d=e.deltaY>0?0.9:1.1; S.treeTransform.k=Math.max(0.3,Math.min(2,S.treeTransform.k*d)); applyTreeTransform(); },{passive:false});
+}
+
+function applyTreeTransform() {
+  const g=document.getElementById('tree-root-g');
+  const {x,y,k}=S.treeTransform;
+  g.setAttribute('transform',`translate(${x},${y}) scale(${k})`);
+}
+
+function treeZoom(f) { S.treeTransform.k=Math.max(0.3,Math.min(2,S.treeTransform.k*f)); applyTreeTransform(); }
+function treeReset() { S.treeTransform={x:80,y:80,k:1}; applyTreeTransform(); }
+
+/* ──────────────────────────────────────────────────────────
+   NODE PANEL
+   ────────────────────────────────────────────────────────── */
+function openPanel(nodeId) {
+  S.selectedNodeId=nodeId;
+  const node=S.nodes[nodeId];
+  if (!node) return;
+  drawTree();
+
+  const col=nodeColor(node);
+  const isUnlocked=node.isFreeWindow||S.unlockedNodes.has(nodeId);
+  const isLiked=S.likedNodes.has(nodeId);
+  const assets=getAvailableAssets(nodeId);
+  const chars=assets.filter(a=>a.type==='character');
+  const scenes=assets.filter(a=>a.type==='scene');
+
+  const statusMap={alive:'活跃',endangered:'濒危',dropped:'已Drop'};
+  const statusColMap={alive:'var(--alive)',endangered:'var(--danger)',dropped:'var(--drop)'};
+
+  document.getElementById('panel-header').innerHTML = `
+    <button class="panel-close" onclick="closePanel()">×</button>
+    <div class="panel-status" style="color:${statusColMap[node.status]}">
+      <div class="status-dot ${node.status}"></div>
+      ${statusMap[node.status]} · Day ${node.ageDays}
+    </div>
+    <div class="panel-title">${node.title}</div>
+    <div class="panel-meta">${node.authorName} · ${node.isFreeWindow?'免费中':'付费 ¥'+node.unlockPrice}</div>`;
+
+  let videoHtml='';
+  if (nodeId === 'node_locked') {
+    // special: use base.mov as blurred preview with lock overlay
+    videoHtml = `<video src="base.mov#t=8" muted playsinline preload="metadata"
+        style="width:100%;height:100%;object-fit:cover;filter:blur(8px) brightness(0.4)"></video>
+      <div class="lock-overlay">
+        <div style="font-size:32px">🔒</div>
+        <div class="lock-text" style="font-size:14px;font-weight:500;color:var(--text)">这条分支尚未开放</div>
+        <div class="lock-text">成为第一个解锁它的人</div>
+        <button class="btn sm primary" onclick="unlockNode('${nodeId}')">解锁 ¥${node.unlockPrice}</button>
+      </div>`;
+  } else if (isUnlocked) {
+    videoHtml = node.videoUrl
+      ? `<video src="${node.videoUrl}" controls muted playsinline style="width:100%;height:100%;object-fit:cover"></video>`
+      : `<video src="base.mov#t=3" muted playsinline preload="metadata"
+           style="width:100%;height:100%;object-fit:cover;filter:brightness(0.6)"></video>
+         <div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center">
+           <div style="font-size:11px;color:var(--faint);text-align:center">视频占位</div>
+         </div>`;
+  } else {
+    videoHtml = `<video src="base.mov#t=6" muted playsinline preload="metadata"
+        style="width:100%;height:100%;object-fit:cover;filter:blur(4px) brightness(0.3)"></video>
+      <div class="lock-overlay">
+        <div style="font-size:24px">🔒</div>
+        <div class="lock-text">30 天免费期已过</div>
+        <button class="btn sm primary" onclick="unlockNode('${nodeId}')">解锁 ¥${node.unlockPrice}</button>
+      </div>`;
+  }
+
+  const charChips = chars.map(c => `<div class="asset-chip"><div class="chip-dot"></div>${c.name}</div>`).join('');
+  const sceneChips = scenes.map(s => `<div class="asset-chip" style="border-color:rgba(240,192,64,0.2)"><div class="chip-dot" style="background:var(--hot)"></div>${s.name}</div>`).join('');
+
+  document.getElementById('panel-body').innerHTML = `
+    <div class="video-box">${videoHtml}</div>
+    <div class="synopsis-box">
+      <div class="section-label">梗概（永远免费）</div>
+      <div class="synopsis-text">${node.synopsis}</div>
+    </div>
+    <div class="stats-row">
+      <div class="stat-box"><div class="stat-val" style="color:${col.fill}">${node.likes}</div><div class="stat-lab">点赞</div></div>
+      <div class="stat-box"><div class="stat-val">${node.impressions}</div><div class="stat-lab">曝光</div></div>
+      <div class="stat-box"><div class="stat-val">${formatRate(node)}</div><div class="stat-lab">Like率</div></div>
+    </div>
+    ${(charChips||sceneChips)?`<div>
+      <div class="section-label">继承资产（视觉血缘）</div>
+      <div class="asset-row">${charChips}${sceneChips}</div>
+    </div>`: ''}
+    <div class="panel-actions">
+      <button class="like-btn ${isLiked?'liked':''}" onclick="likeNode('${nodeId}')">
+        ${isLiked?'♥':'♡'} ${node.likes}
+      </button>
+      ${node.status!=='dropped'?`<button class="btn sm primary" onclick="openCreateModal('${nodeId}')">✎ 在此续写</button>`:''}
+    </div>`;
+
+  document.getElementById('node-panel').classList.add('open');
+}
+
+function closePanel() {
+  S.selectedNodeId=null;
+  document.getElementById('node-panel').classList.remove('open');
+  drawTree();
+}
+
+function likeNode(nodeId) {
+  const node=S.nodes[nodeId]; if(!node) return;
+  const was=S.likedNodes.has(nodeId);
+  if (was){S.likedNodes.delete(nodeId);node.likes--;}else{S.likedNodes.add(nodeId);node.likes++;}
+  openPanel(nodeId); drawTree();
+  toast(was?'已取消点赞':'♥ 点赞成功，节点热度已更新');
+}
+
+function unlockNode(nodeId) {
+  const node=S.nodes[nodeId];
+  S.unlockedNodes.add(nodeId);
+  toast(`¥${node.unlockPrice} 已支付（mock）：创作者 ¥1.5，平台 ¥0.4`);
+  openPanel(nodeId);
+}
+
+/* ──────────────────────────────────────────────────────────
+   CREATE MODAL
+   ────────────────────────────────────────────────────────── */
+function openCreateModal(parentId) {
+  const parent=S.nodes[parentId]; if(!parent) return;
+  S.modalParentId=parentId; S.modalPhase='draft'; S.modalResult=null;
+  S.modalError=''; S.modalPayloadVisible=false; S.modalResultIndex=0;
+  S.modalPrompt=parent.prompt.replace(/^【角色圣经】.*?\n/u,'').trim();
+  const assets=getAvailableAssets(parentId);
+  const chars=assets.filter(a=>a.type==='character');
+  const scenes=assets.filter(a=>a.type==='scene');
+  S.modalSelectedChars=new Set(chars.slice(0,2).map(a=>a.assetId));
+  S.modalSelectedScene=scenes[0]?.assetId||'';
+  renderModal();
+  document.getElementById('modal-create').classList.add('open');
+}
+
+function closeModal() { document.getElementById('modal-create').classList.remove('open'); }
+
+function renderModal() {
+  const assets=getAvailableAssets(S.modalParentId);
+  const chars=assets.filter(a=>a.type==='character');
+  const scenes=assets.filter(a=>a.type==='scene');
+  const styleAsset=assets.find(a=>a.type==='style');
+  const parent=S.nodes[S.modalParentId];
+
+  // Phase steps
+  document.querySelectorAll('.phase-step').forEach(el => {
+    el.classList.toggle('active', el.dataset.phase===S.modalPhase);
+  });
+
+  // Left panel
+  function charBtn(c) {
+    const sel=S.modalSelectedChars.has(c.assetId);
+    const photoHtml=c.refImageUrl
+      ? `<img src="${c.refImageUrl}" alt="${c.name}" onerror="this.style.display='none'">`
+      : `<span style="font-size:20px">👤</span>`;
+    return `<button class="char-btn${sel?' selected':''}" onclick="toggleChar('${c.assetId}')">
+      <div class="char-photo">${photoHtml}</div>
+      <div class="char-name">${c.name}</div>
+    </button>`;
+  }
+  function sceneBtn(s) {
+    const sel=S.modalSelectedScene===s.assetId;
+    const photoHtml=s.refImageUrl
+      ? `<img src="${s.refImageUrl}" alt="${s.name}" onerror="this.style.display='none'">`
+      : s.name;
+    return `<button class="scene-btn${sel?' selected':''}" onclick="selectScene('${s.assetId}')">
+      <div class="scene-photo">${photoHtml}</div>
+      <div class="scene-name">${s.name}</div>
+    </button>`;
+  }
+
+  document.getElementById('modal-left').innerHTML = `
+    <div class="parent-ctx">
+      <div class="ctx-label">接续自</div>
+      <p>${parent.synopsis}</p>
+    </div>
+    <div>
+      <label class="form-label">下一幕发生什么？</label>
+      <textarea class="prompt-area" id="modal-prompt" rows="4"
+        placeholder="例如：林夏在会议室关掉投影，只留下一段陈翊无法否认的录音。">${S.modalPrompt}</textarea>
+      <div class="role-lock" style="margin-top:8px">
+        <svg width="12" height="12" viewBox="0 0 12 12" fill="none" style="margin-top:1px;flex-shrink:0">
+          <rect x="2" y="5" width="8" height="6" rx="1.5" stroke="currentColor" stroke-width="1.2"/>
+          <path d="M4 5V3.5a2 2 0 014 0V5" stroke="currentColor" stroke-width="1.2"/>
+        </svg>
+        角色身份前缀已锁定，系统自动组装 Fusion 参考图——保证视觉血缘一致
+      </div>
+    </div>
+    <div>
+      <label class="form-label">出场角色 · 继承参考图</label>
+      <div class="char-grid">${chars.map(charBtn).join('')}${!chars.length?'<div style="font-size:12px;color:var(--faint)">无继承角色</div>':''}</div>
+    </div>
+    <div>
+      <label class="form-label">画面环境</label>
+      <div class="scene-grid">${scenes.map(sceneBtn).join('')}${!scenes.length?'<div style="font-size:12px;color:var(--faint)">无继承场景</div>':''}</div>
+    </div>
+    <div>
+      <label class="form-label">时长 / 运镜 / 模型</label>
+      <div class="options-row">
+        <select class="option-select" id="modal-duration"><option value="5">5 秒</option><option value="8">8 秒</option></select>
+        <select class="option-select" id="modal-motion"><option value="push_in">Push In</option><option value="pull_back">Pull Back</option><option value="pan_left">Pan Left</option><option value="static">Static</option></select>
+        <select class="option-select" id="modal-model"><option value="v6">V6 通用</option><option value="C1">C1 动作</option><option value="v4.5">V4.5</option></select>
+      </div>
+    </div>`;
+
+  renderPreview();
+  renderModalActions();
+  syncModalToken();
+
+  document.getElementById('modal-error').innerHTML=S.modalError?`<div class="error-msg">${S.modalError}</div>`:'';
+  document.getElementById('tech-payload').classList.toggle('open',S.modalPayloadVisible);
+  if (S.modalPayloadVisible) updatePayloadDisplay();
+  document.getElementById('tech-toggle').textContent=S.modalPayloadVisible?'收起 API 请求':'查看 API 请求';
+}
+
+function renderPreview() {
+  const pp=document.getElementById('preview-player');
+  if (S.modalPhase==='generating') {
+    pp.innerHTML=`<div class="preview-empty">
+      <div class="loading-ring"></div>
+      <p style="margin-top:12px;color:var(--muted)">AI 正在构思分支…</p>
+      <p style="font-size:11px;color:var(--faint);margin-top:4px">${CONFIG.DEMO_MODE?'(演示模式，秒回)':'真实生成约 90s'}</p>
+    </div>`;
+  } else if (S.modalPhase==='preview'&&S.modalResult) {
+    const r=S.modalResult;
+    pp.innerHTML=r.videoUrl
+      ? `<video src="${r.videoUrl}" controls autoplay muted playsinline style="width:100%;height:100%;object-fit:cover"></video>`
+      : `<div class="preview-empty">
+          <div class="icon">✨</div>
+          <p style="font-size:13px;font-weight:500;color:var(--text)">${r.title}</p>
+          <p style="font-size:12px;color:var(--muted);margin-top:6px;line-height:1.5">${r.synopsis}</p>
+          <p style="font-size:10px;color:var(--faint);margin-top:8px">seed: ${r.seed||'—'}</p>
+        </div>`;
+  } else {
+    pp.innerHTML=`<div class="preview-empty"><div class="icon">🎬</div><p>生成后在这里预览</p></div>`;
+  }
+}
+
+function renderModalActions() {
+  const working=S.modalPhase==='generating';
+  const hasResult=S.modalPhase==='preview'&&S.modalResult;
+  const tokenOK=S.tokenBalance>=5;
+  document.getElementById('modal-actions').innerHTML=`
+    <button class="btn" ${working?'disabled':''} onclick="runGeneration(true)">🔀 换一版</button>
+    <button class="btn primary" ${working||!tokenOK?'disabled':''} onclick="runGeneration(false)">
+      ${working?'生成中…':'生成 · 5 token'}
+    </button>
+    ${hasResult?`<button class="btn gold" onclick="publishBranch()">✓ 使用并挂树</button>`:''}`;
+}
+
+function syncModalToken() {
+  const el=document.getElementById('modal-token-count');
+  if (el) el.textContent=S.tokenBalance;
+  document.getElementById('token-count').textContent=S.tokenBalance;
+}
+
+function toggleChar(assetId) {
+  if (S.modalSelectedChars.has(assetId)) S.modalSelectedChars.delete(assetId);
+  else S.modalSelectedChars.add(assetId);
+  renderModal();
+}
+function selectScene(assetId) { S.modalSelectedScene=assetId; renderModal(); }
+
+function togglePayload() {
+  S.modalPayloadVisible=!S.modalPayloadVisible;
+  document.getElementById('tech-payload').classList.toggle('open',S.modalPayloadVisible);
+  document.getElementById('tech-toggle').textContent=S.modalPayloadVisible?'收起 API 请求':'查看 API 请求';
+  if (S.modalPayloadVisible) updatePayloadDisplay();
+}
+
+function buildPayload() {
+  const assets=getAvailableAssets(S.modalParentId);
+  const chars=assets.filter(a=>a.type==='character'&&S.modalSelectedChars.has(a.assetId));
+  const scene=assets.find(a=>a.type==='scene'&&a.assetId===S.modalSelectedScene);
+  const style=assets.find(a=>a.type==='style');
+  const promptEl=document.getElementById('modal-prompt');
+  const userPrompt=promptEl?promptEl.value.trim():S.modalPrompt;
+  const duration=parseInt(document.getElementById('modal-duration')?.value||'5');
+  const camera=document.getElementById('modal-motion')?.value||'push_in';
+  const model=document.getElementById('modal-model')?.value||'v6';
+  const preset=PRESET_RESULTS[S.modalResultIndex];
+  const refs=[
+    ...chars.map(c=>({type:'subject',img_id:c.pixverseImgId,ref_name:c.refName})),
+    ...(scene?[{type:'background',img_id:scene.pixverseImgId,ref_name:scene.refName}]:[]),
+  ].slice(0,3);
+  const lockedPrefix=chars.map(c=>c.promptPrefix).filter(Boolean).join('. ');
+  const negPrompt=chars.map(c=>c.negativePrompt).filter(Boolean)
+    .concat(['no distorted face','no flicker','no sudden identity change']).join(', ');
+  return {
+    _demo: CONFIG.DEMO_MODE?'DEMO_MODE: uses preset result':'LIVE: calls PixVerse Fusion',
+    would_call:'/openapi/v2/video/fusion/generate',
+    image_references:refs,
+    prompt:[style?.promptPrefix,lockedPrefix,userPrompt].filter(Boolean).join('. '),
+    negative_prompt:negPrompt,
+    model,duration,quality:CONFIG.DEFAULT_QUALITY,
+    aspect_ratio:'9:16',motion_mode:'normal',camera_movement:camera,
+    seed:preset?.seed||Math.floor(Math.random()*1e9),
+  };
+}
+
+function updatePayloadDisplay() {
+  const el=document.getElementById('tech-payload');
+  if (el) el.textContent=JSON.stringify(buildPayload(),null,2);
+}
+
+async function runGeneration(shuffle) {
+  const promptEl=document.getElementById('modal-prompt');
+  const userPrompt=promptEl?promptEl.value.trim():'';
+  if (!userPrompt){S.modalError='请先写一句下一幕剧情。';renderModal();return;}
+  if (!S.modalSelectedChars.size){S.modalError='至少选择一个出场角色。';renderModal();return;}
+  if (S.tokenBalance<5){S.modalError='Token 不足，无法生成。';renderModal();return;}
+  S.modalPrompt=userPrompt; S.modalError=''; S.modalResult=null;
+  if (shuffle) S.modalResultIndex=(S.modalResultIndex+1)%PRESET_RESULTS.length;
+  S.tokenBalance-=5; S.modalPhase='generating';
+  renderModal(); syncModalToken();
+  const payload=buildPayload();
+  try {
+    const result=CONFIG.DEMO_MODE||!CONFIG.PIXVERSE_API_KEY
+      ? await demoGenerate()
+      : await realGenerate(payload);
+    S.modalResult=result; S.modalPhase='preview';
+  } catch(e) {
+    S.modalPhase='draft'; S.tokenBalance+=5;
+    S.modalError=e.message||'生成失败，请重试';
+  }
+  renderModal(); syncModalToken();
+}
+
+async function demoGenerate() {
+  await sleep(1800+Math.random()*600);
+  const p=PRESET_RESULTS[S.modalResultIndex];
+  return {title:p.title,synopsis:p.synopsis,videoUrl:p.videoUrl||'',seed:p.seed,generationId:'demo_'+Date.now()};
+}
+
+async function realGenerate(payload) {
+  const base=CONFIG.PROXY_URL||CONFIG.PIXVERSE_BASE;
+  const headers={'Content-Type':'application/json','AI-token':CONFIG.PIXVERSE_API_KEY};
+  const res=await fetch(`${base}/openapi/v2/video/fusion/generate`,{method:'POST',headers,body:JSON.stringify({
+    image_references:payload.image_references,prompt:payload.prompt,
+    negative_prompt:payload.negative_prompt,model:payload.model,
+    duration:payload.duration,quality:payload.quality,
+    aspect_ratio:payload.aspect_ratio,motion_mode:payload.motion_mode,
+    camera_movement:payload.camera_movement,seed:payload.seed,
+  })});
+  if (!res.ok) throw new Error(`API 错误 ${res.status}`);
+  const data=await res.json();
+  if (data.ErrCode!==0) throw new Error(data.ErrMsg||'提交失败');
+  const gid=data.Resp?.video_id;
+  if (!gid) throw new Error('未获取到 generation_id');
+  for (let i=0;i<60;i++) {
+    await sleep(5000);
+    const pr=await fetch(`${base}/openapi/v2/video/result/${gid}`,{headers});
+    const pd=await pr.json();
+    const status=pd.Resp?.status;
+    if (status===1) return {videoUrl:pd.Resp.video_url,title:'新芽·'+S.modalPrompt.slice(0,10),synopsis:S.modalPrompt,generationId:gid};
+    if (status===7) throw new Error('审核失败，请修改提示词');
+    if (status===8) throw new Error('生成失败，请重试');
+  }
+  throw new Error('生成超时（>5 分钟）');
+}
+
+function publishBranch() {
+  if (!S.modalResult) return;
+  if (!confirm('确定把这条分支加入剧情树吗？')) return;
+  const newId=uid();
+  const parent=S.nodes[S.modalParentId];
+  S.nodes[newId]={
+    nodeId:newId, parentId:S.modalParentId, storyId:'story_001',
+    title:S.modalResult.title||'新芽·'+S.modalPrompt.slice(0,10),
+    synopsis:S.modalResult.synopsis||S.modalPrompt,
+    prompt:S.modalPrompt,
+    authorId:'user_me', authorName:'你',
+    derivedFrom:parent.authorName,
+    videoUrl:S.modalResult.videoUrl||'',
+    duration:5, ageDays:0, isFreeWindow:true, unlockPrice:1.9,
+    likes:0, impressions:0, paidUnlocks:0,
+    isProtected:true, status:'alive', ownAssetIds:[], thumbUrl:'',
+  };
+  closeModal();
+  S.treePositions=computeLayout('node_root');
+  drawTree();
+  setTimeout(()=>openPanel(newId), 200);
+  toast('🌿 新分支已加入剧情树！');
+}
+
+/* ──────────────────────────────────────────────────────────
+   INIT
+   ────────────────────────────────────────────────────────── */
+document.addEventListener('DOMContentLoaded', () => {
+  renderHome();
+  document.getElementById('modal-create').addEventListener('input', e => {
+    if (e.target.id==='modal-prompt') S.modalPrompt=e.target.value;
+    if (S.modalPayloadVisible) updatePayloadDisplay();
+  });
+});
+</script>
+</body>
+</html>

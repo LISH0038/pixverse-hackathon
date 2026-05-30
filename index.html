@@ -1,0 +1,141 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>StoryTree Mini Workflow</title>
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body>
+    <main class="app-shell">
+      <aside class="branch-panel">
+        <div class="brand-block">
+          <span class="kicker">StoryTree / Fusion</span>
+          <h1>短剧生成工作台</h1>
+          <p>沿父链继承角色、场景与风格，模拟 Fusion 生成链路，用预制视频完成现场分支闭环。</p>
+        </div>
+
+        <section class="tree-section" aria-labelledby="tree-title">
+          <div class="section-heading">
+            <h2 id="tree-title">剧情父节点</h2>
+            <span id="node-count">0 nodes</span>
+          </div>
+          <div class="tree-list" id="tree-list"></div>
+        </section>
+      </aside>
+
+      <section class="workspace">
+        <header class="workspace-header">
+          <div>
+            <span class="kicker">Mini P0 Flow</span>
+            <h2 id="selected-title">选择一个节点开始续写</h2>
+          </div>
+          <div class="token-wallet">
+            <span id="api-status">Demo Logic</span>
+            <strong id="token-balance">95</strong>
+          </div>
+        </header>
+
+        <div class="workflow-grid">
+          <section class="panel asset-panel" aria-labelledby="assets-title">
+            <div class="section-heading">
+              <h3 id="assets-title">继承资产包</h3>
+              <span id="asset-summary">自动计算</span>
+            </div>
+            <div class="asset-actions">
+              <button class="secondary-button" id="upload-local-button" type="button">检查继承链路</button>
+              <span id="upload-hint">本演示使用预制 img_id，不调用 API</span>
+            </div>
+            <div class="asset-strip" id="asset-strip"></div>
+          </section>
+
+          <section class="panel prompt-panel" aria-labelledby="prompt-title">
+            <div class="section-heading">
+              <h3 id="prompt-title">本镜生成</h3>
+              <span id="branch-path">node_V0</span>
+            </div>
+
+            <label class="field-label" for="prompt-input">一句话剧情</label>
+            <textarea id="prompt-input" rows="5"></textarea>
+
+            <div class="control-grid">
+              <label class="control">
+                <span>生成模式</span>
+                <select id="mode-select">
+                  <option value="preset">预制拟实时</option>
+                  <option value="fusion">Fusion Payload 展示</option>
+                </select>
+              </label>
+              <label class="control">
+                <span>模型</span>
+                <select id="model-select">
+                  <option value="c1">C1</option>
+                  <option value="v6">V6</option>
+                  <option value="v4.5">v4.5</option>
+                </select>
+              </label>
+              <label class="control">
+                <span>时长</span>
+                <select id="duration-select">
+                  <option value="5">5s</option>
+                  <option value="8">8s</option>
+                </select>
+              </label>
+              <label class="control">
+                <span>运镜</span>
+                <select id="camera-select">
+                  <option value="push_in">缓慢推进</option>
+                  <option value="static">固定镜头</option>
+                  <option value="pan_left">左移横摇</option>
+                  <option value="handheld">轻微手持</option>
+                </select>
+              </label>
+            </div>
+
+            <label class="control scene-control">
+              <span>场景</span>
+              <select id="scene-select"></select>
+            </label>
+
+            <div class="character-picker" id="character-picker"></div>
+
+            <div class="action-row">
+              <button class="secondary-button" id="shuffle-button" type="button">Shuffle</button>
+              <button class="primary-button" id="generate-button" type="button">生成预制分支</button>
+              <button class="ghost-button" id="publish-button" type="button" disabled>使用并挂树</button>
+            </div>
+            <p class="generate-hint" id="generate-hint">检查生成条件中...</p>
+          </section>
+
+          <section class="panel result-panel" aria-labelledby="result-title">
+            <div class="section-heading">
+              <h3 id="result-title">异步任务</h3>
+              <span id="task-id">待提交</span>
+            </div>
+
+            <div class="status-stack" id="status-stack"></div>
+
+            <div class="preview-shell" id="preview-shell">
+              <div class="preview-empty">
+                <span>V</span>
+                <p>生成完成后在这里预览预制单镜头片段</p>
+              </div>
+            </div>
+          </section>
+
+          <section class="panel payload-panel" aria-labelledby="payload-title">
+            <div class="section-heading">
+              <h3 id="payload-title">Fusion Payload</h3>
+              <span id="seed-chip">seed</span>
+            </div>
+            <pre id="payload-output"></pre>
+          </section>
+        </div>
+      </section>
+    </main>
+
+    <div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+    <script src="./app.js"></script>
+  </body>
+</html>

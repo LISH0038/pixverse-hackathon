@@ -1,0 +1,25 @@
+# Claude / testing artifacts
+.claude/
+.playwright-mcp/
+
+# Environment
+.env
+
+# Test screenshots
+branchly_*.png
+final_tree.png
+panel_branch1.png
+tree_cards.png
+video_check.png
+branchly_scroll.png
+
+# Large archives
+Archive.zip
+*.zip
+
+# React app (nested git repo, main deliverable is storytree_creator.html)
+storytree/
+
+# OS
+.DS_Store
+Thumbs.db
